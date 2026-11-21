@@ -37,6 +37,7 @@ const SITE = {
     { label: "Thingiverse", url: "https://www.thingiverse.com/Remi-Rafael/designs" },
     { label: "MakerWorld", url: "https://makerworld.com/en/@remi.rafael" },
     { label: "Printables", url: "https://www.printables.com/@RemiRafael/models" },
+    { label: "Cad Crowd", url: "https://www.cadcrowd.com/profile/266508-rmir1" },
     { label: "Instructables", url: "https://www.instructables.com/member/Remi_Rafael/instructables/" },
     { label: "GitHub", url: "https://github.com/RemiRafael" },
   ],
@@ -76,6 +77,10 @@ const SITE = {
     pdf: "cv/industry-cv.pdf",
     updated: "Nov 2026",
     blurb: "For R&D engineer, process engineer and application engineer roles (2 pages).",
+    // Extra web links shown as buttons next to the PDF buttons.
+    links: [
+      { label: "Freelance design work (Cad Crowd)", url: "https://www.cadcrowd.com/profile/266508-rmir1" },
+    ],
     highlightsTitle: "Key achievements",
     highlights: [
       "Built a complete hybrid 3D-printing platform (2 FDM heads + laser, software, composite filament) from scratch.",

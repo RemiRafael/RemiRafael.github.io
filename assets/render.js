@@ -156,6 +156,7 @@
         <a class="btn" href="${esc(data.pdf)}" target="_blank" rel="noopener">Open PDF</a>
         <a class="btn ghost" href="${esc(data.pdf)}" download>Download</a>
         ${(data.documents || []).map((d) => `<a class="btn ghost" href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.label)} (PDF)</a>`).join("")}
+        ${(data.links || []).map((l) => `<a class="btn ghost" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join("")}
         <a class="btn ghost" href="#" data-contact>Contact me</a>
       </div>
       <section class="cv-summary${degrees.length ? "" : " single"}">
