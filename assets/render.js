@@ -51,7 +51,18 @@
           el.classList.toggle("is-hidden", value !== "all" && el.dataset[attr] !== value);
         });
       });
+      const wanted = decodeURIComponent(location.hash.slice(1));
+      const chip = wanted && bar.querySelector(`.chip[data-value="${wanted}"]`);
+      if (chip) chip.click();
     });
+    const target = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    if (target) {
+      const go = () => target.scrollIntoView({ block: "start", behavior: "instant" });
+      let userScrolled = false;
+      ["wheel", "touchstart", "keydown"].forEach((ev) => window.addEventListener(ev, () => (userScrolled = true), { once: true }));
+      [50, 400, 1200].forEach((ms) => setTimeout(() => !userScrolled && go(), ms));
+      window.addEventListener("load", () => !userScrolled && go());
+    }
   }
 
   function home() {
@@ -82,7 +93,9 @@
         </div>
       </section>
       <section class="numbers">
-        ${(S.keyNumbers || []).map(([n, t]) => `<div><strong>${esc(n)}</strong><span>${esc(t)}</span></div>`).join("")}
+        ${(S.keyNumbers || []).map(([n, t, href]) => href
+          ? `<a class="number-link" href="${esc(href)}"><strong>${esc(n)}</strong><span>${esc(t)}</span></a>`
+          : `<div><strong>${esc(n)}</strong><span>${esc(t)}</span></div>`).join("")}
       </section>
       <section class="tiles">
         ${tiles.map(([href, t, d]) => `<a class="tile" href="${href}"><h2>${t}</h2><p>${esc(d)}</p><span class="arrow">&rarr;</span></a>`).join("")}
@@ -152,6 +165,7 @@
       <section class="timeline">
         ${S.conferences.map((c) => `
           <article class="talk card" data-format="${esc(slug(c.format))}">
+            ${c.abstractImage ? `<a class="talk-abstract" href="${esc(c.abstractImage)}" target="_blank">${img(c.abstractImage, "Graphical abstract")}</a>` : ""}
             <div class="talk-year">${esc(c.year)}</div>
             <div class="talk-body">
               <span class="badge format-${esc(slug(c.format))}">${esc(c.format)}</span>
@@ -177,8 +191,28 @@
           <a href="${esc(S.thingiverseProfile)}" target="_blank" rel="noopener">Thingiverse</a> (100,000+ downloads),
           step-by-step tutorials on <a href="${esc(S.instructablesProfile)}" target="_blank" rel="noopener">Instructables</a>
           and demonstrations on <a href="${esc(S.youtubeChannel)}" target="_blank" rel="noopener">YouTube</a>.</p>
-        ${filterBar(categories, "category")}
       </section>
+      ${(S.oshwaCertifications || []).length ? `
+      <section class="oshwa" id="oshwa">
+        <div class="more-head">
+          <div><p class="kicker">Open Source Hardware Association</p>
+            <h2>OSHWA-certified open hardware <span class="count">${S.oshwaCertifications.length}</span></h2></div>
+        </div>
+        <div class="grid">
+          ${S.oshwaCertifications.map((o) => `
+            <article class="project card">
+              <a class="project-image" href="${esc(o.certificate)}" target="_blank" rel="noopener">${img(o.image, o.title)}</a>
+              <div class="project-body">
+                <div class="meta"><span class="badge cert">OSHWA ${esc(o.uid)}</span></div>
+                <h2>${esc(o.title)}</h2>
+                <p>${rich(o.description)}</p>
+                <div class="links">${linkBtn({ label: "Certificate " + o.uid, url: o.certificate }, "btn small")}${(o.links || []).map((l) => linkBtn(l, "btn ghost small")).join("")}</div>
+              </div>
+            </article>`).join("")}
+        </div>
+      </section>
+` : ""}
+      <div class="projects-head"><p class="kicker">Featured</p><h2>All projects</h2>${filterBar(categories, "category")}</div>
       <section class="grid">
         ${S.projects.map((p) => `
           <article class="project card" data-category="${esc(slug(p.category))}">
@@ -191,7 +225,7 @@
             </div>
           </article>`).join("")}
       </section>
-      <section class="more">
+      <section class="more" id="all-designs">
         <div class="more-head">
           <div><p class="kicker">Thingiverse</p><h2>All other designs <span class="count">${S.moreDesigns.length}</span></h2></div>
           <input class="search" type="search" placeholder="Search designs…" aria-label="Search designs">

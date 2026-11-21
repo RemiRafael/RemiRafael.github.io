@@ -279,3 +279,22 @@ details summary { cursor: pointer; color: var(--accent); font-size: .9rem; font-
 [data-theme="petrol"] footer .muted { color: #9fb7c8; }
 
 [data-theme="petrol"] .avatar { width: 128px; height: 128px; border: 3px solid #e3a57a; box-shadow: 0 10px 30px -10px rgba(0,0,0,.6); margin-bottom: 1rem; }
+
+.talk-abstract { grid-column: 1 / -1; display: block; background: #fff; border-bottom: 1px solid var(--border); margin: -1.1rem -1.3rem .4rem; text-align: center; }
+.talk-abstract img { display: block; margin: 0 auto; max-height: 340px; width: auto; max-width: 100%; object-fit: contain; padding: .8rem; }
+
+/* Clickable key numbers on the home page */
+.numbers a.number-link { display: block; text-decoration: none; color: inherit; background: var(--surface); border-top: 3px solid var(--accent-2);
+  border-radius: 6px; padding: 1.2rem 1rem; text-align: center; box-shadow: var(--shadow); transition: transform .15s, box-shadow .15s; }
+.numbers a.number-link:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(11, 60, 93, .15); }
+.numbers a.number-link span { text-decoration: underline; text-decoration-color: transparent; transition: text-decoration-color .15s; }
+.numbers a.number-link:hover span { text-decoration-color: currentColor; }
+
+/* OSHWA certifications section (Maker projects page) */
+.oshwa { margin: 0 0 2.4rem; scroll-margin-top: 5rem; }
+.oshwa h2 { font-size: 1.5rem; }
+.oshwa .project h2 { font-size: 1.1rem; }
+.badge.cert { background: var(--accent-strong); color: #fff; }
+#all-designs { scroll-margin-top: 5rem; }
+.projects-head { margin: 0 0 1rem; scroll-margin-top: 5rem; }
+.projects-head h2 { font-size: 1.5rem; margin: 0 0 .6rem; }
