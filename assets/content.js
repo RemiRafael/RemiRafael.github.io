@@ -24,7 +24,11 @@ const SITE = {
   intro: "I build fabrication processes and working hardware from scratch: hybrid 3D printing of copper electronics, cleanroom thin-film sensors, two-photon micro-printing on flexible neural probes, and open-source precision lab instruments. Mechanical engineer (MEng) and PhD in micro- and nano-electronics, with five years of postdoctoral R&D in Hong Kong. Looking for R&D, engineering and research positions.",
   workRight: "Hong Kong resident · full right to work · no sponsorship required",
   photo: "images/headshot.jpg",
-  email: "remi.rafael@laposte.net",
+  // Email is stored encoded (reversed + base64) so simple crawlers cannot read it.
+  // To change it: in a browser console run  btoa("new@address".split("").reverse().join(""))
+  emailEncoded: "dGVuLmV0c29wYWxAbGVhZmFyLmltZXI=",
+  // Home page layout: "classic", "side", "profile" or "banner" (preview any with ?layout=... in the address).
+  homeLayout: "side",
   links: [
     { label: "LinkedIn", url: "https://www.linkedin.com/in/r%C3%A9mi-rafael-66716679/" },
     { label: "ResearchGate", url: "https://www.researchgate.net/profile/Remi-Rafael" },
@@ -46,11 +50,19 @@ const SITE = {
     pdf: "cv/research-cv.pdf",
     updated: "Nov 2026",
     blurb: "For research fellow, postdoctoral and academic positions (3 pages, full publication and conference list).",
+    highlightsTitle: "Research focus",
     highlights: [
       "<b>3D-printed electronics</b> – invented a hybrid FDM + laser-sintering process printing copper and thermoplastic in one machine (<i>Adv. Mater. Technol.</i> 2023; US patent application).",
       "<b>Neural interfaces</b> – freeform porous 3D microelectrodes on ultrathin polyimide probes: impedance at 1 kHz cut from 1.71 to 0.18 MΩ, stable recordings in rats over 80 days.",
       "<b>Open research hardware</b> – modular 3D-printed positioning and micromanipulation toolkit; 3 OSHWA certifications; GOSH 2026 talk; submitted to <i>HardwareX</i>.",
-      "PhD INSA Lyon (2018) · MSc Cranfield University · MEng SUPMECA Paris",
+    ],
+    // Degrees: shown in their own box next to the highlights (both CV pages use the same list).
+    qualificationsTitle: "Degrees",
+    qualifications: "shared",
+    // Extra documents (PDFs in the cv folder), shown as buttons under the CV.
+    documents: [
+      { label: "Research statement", url: "cv/research-statement.pdf" },
+      { label: "Teaching statement", url: "cv/teaching-statement.pdf" },
     ],
     previews: [
       "images/cv/research-cv-p1.png",
@@ -62,14 +74,22 @@ const SITE = {
     pdf: "cv/industry-cv.pdf",
     updated: "Nov 2026",
     blurb: "For R&D engineer, process engineer and application engineer roles (2 pages).",
+    highlightsTitle: "Key achievements",
     highlights: [
       "Built a complete hybrid 3D-printing platform (2 FDM heads + laser, software, composite filament) from scratch.",
       "Micro-fabrication: photolithography, ALD, sputtering, evaporation, RIE, electroless gold plating, laser processing.",
       "Mechanical design & prototyping: SolidWorks, CATIA, precision stages, fixtures and test benches, PCB and firmware.",
       "Delivered working wearable ECG units to a partner team for a human study.",
     ],
+    qualificationsTitle: "Degrees",
+    qualifications: "shared",
     previews: ["images/cv/industry-cv-p1.png", "images/cv/industry-cv-p2.png"],
   },
+  degrees: [
+    ["PhD, Micro- and Nano-electronics", "INSA Lyon, France · 2018"],
+    ["MSc, Applied Nanotechnology", "Cranfield University, UK · 2015"],
+    ["MEng (Diplôme d'Ingénieur), Mechanical Engineering", "SUPMECA Paris, France · 2015"],
+  ],
   publications: [
     {
       title: "A modular open-source 3D-printed toolkit for laboratory positioning and micromanipulation",

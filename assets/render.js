@@ -27,11 +27,31 @@
   document.title = page === "home" ? document.title : `${document.title} | ${S.name}`;
 
   const contactLinks = [
-    `<a href="mailto:${esc(S.email)}">Email</a>`,
+    `<a href="#" data-contact>Email</a>`,
     ...S.links.filter((l) => l.url).map((l) => `<a href="${esc(l.url)}"${external(l.url)}>${esc(l.label)}</a>`),
   ].join("");
   document.getElementById("footer").innerHTML =
-    `<div class="footer-links">${contactLinks}</div><p class="muted">${esc(S.email)} · © ${new Date().getFullYear()} ${esc(S.name)}</p>`;
+    `<div class="footer-links">${contactLinks}</div><p class="muted">© ${new Date().getFullYear()} ${esc(S.name)}</p>`;
+
+
+  // Contact: the address is only decoded when a visitor clicks, then opened in their mail app and copied.
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest("[data-contact]");
+    if (!link) return;
+    event.preventDefault();
+    const address = atob(S.emailEncoded || "").split("").reverse().join("");
+    navigator.clipboard?.writeText(address).catch(() => {});
+    let note = document.querySelector(".contact-note");
+    if (!note) {
+      note = document.createElement("div");
+      note.className = "contact-note";
+      document.body.appendChild(note);
+    }
+    note.innerHTML = `Opening your email app… <b>${esc(address)}</b> (copied)`;
+    note.classList.add("show");
+    setTimeout(() => note.classList.remove("show"), 6000);
+    window.location.href = "mailto:" + address;
+  });
 
   // Filter buttons: one generic implementation for every page
   function filterBar(values, attr, allLabel = "All", allExcludes = []) {
@@ -77,45 +97,78 @@
       ["conferences.html", "Conferences", `${S.conferences.length} talks and posters – with videos`],
       ["projects.html", "Maker projects", `116 Thingiverse designs, Instructables tutorials and customizable models`],
     ];
-    main.innerHTML = `
-      <section class="hero">
-        <div class="hero-text">
-          ${S.photo ? `<img class="avatar" src="${esc(S.photo)}" alt="${esc(S.name)}">` : ""}
-          <p class="eyebrow">${esc(S.tagline)}</p>
-          <h1>${esc(S.name)}<span class="post">${esc(S.postnominal || "")}</span></h1>
-          <p class="intro">${rich(S.intro)}</p>
-          <p class="work-right">${esc(S.workRight || "")}</p>
-          <div class="hero-actions">
-            <a class="btn" href="mailto:${esc(S.email)}">Contact me</a>
+    const layout = new URLSearchParams(location.search).get("layout") || S.homeLayout || "classic";
+    const avatar = S.photo ? `<img class="avatar" src="${esc(S.photo)}" alt="${esc(S.name)}">` : "";
+    const nameBlock = `<p class="eyebrow">${esc(S.tagline)}</p>
+          <h1>${esc(S.name)}<span class="post">${esc(S.postnominal || "")}</span></h1>`;
+    const actions = `<div class="hero-actions">
+            <a class="btn" href="#" data-contact>Contact me</a>
             <a class="btn ghost light" href="research-cv.html">Research CV</a>
             <a class="btn ghost light" href="industry-cv.html">Industry CV</a>
-          </div>
-        </div>
-        <div class="qr-card">
+          </div>`;
+    const qr = `<div class="qr-card">
           <img src="images/qr-home.svg" alt="QR code to this website">
           <p><b>Scan to open on your phone</b><br><span>${esc((S.siteUrl || "").replace(/^https?:\/\//, ""))}</span></p>
-        </div>
-      </section>
-      <section class="numbers">
+        </div>`;
+    const numbers = `<section class="numbers">
         ${(S.keyNumbers || []).map(([n, t, href]) => href
           ? `<a class="number-link" href="${esc(href)}"><strong>${esc(n)}</strong><span>${esc(t)}</span></a>`
           : `<div><strong>${esc(n)}</strong><span>${esc(t)}</span></div>`).join("")}
-      </section>
+      </section>`;
+    const intro = `<p class="intro">${rich(S.intro)}</p>
+          <p class="work-right">${esc(S.workRight || "")}</p>`;
+    let hero;
+    if (layout === "side" || layout === "banner") {
+      hero = `<section class="hero layout-${layout}">
+        <div class="hero-text">
+          <div class="hero-id">${avatar}<div>${nameBlock}</div></div>
+          ${intro}
+          ${actions}
+        </div>
+        ${qr}
+        ${layout === "banner" ? numbers.replace('class="numbers"', 'class="numbers in-hero"') : ""}
+      </section>`;
+    } else if (layout === "profile") {
+      hero = `<section class="hero layout-profile">
+        <div class="hero-aside">${avatar}${qr}</div>
+        <div class="hero-text">${nameBlock}${intro}${actions}</div>
+      </section>`;
+    } else {
+      hero = `<section class="hero layout-classic">
+        <div class="hero-text">${avatar}${nameBlock}${intro}${actions}</div>
+        ${qr}
+      </section>`;
+    }
+    main.innerHTML = `
+      ${hero}
+      ${layout === "banner" ? "" : numbers}
       <section class="tiles">
         ${tiles.map(([href, t, d]) => `<a class="tile" href="${href}"><h2>${t}</h2><p>${esc(d)}</p><span class="arrow">&rarr;</span></a>`).join("")}
       </section>`;
   }
 
   function cv(data, label) {
+    const degrees = data.qualifications === "shared" ? S.degrees || [] : data.qualifications || [];
     main.innerHTML = `
       <section class="page-head"><p class="kicker">Curriculum vitae</p><h1>${label}</h1>
         <p>${esc(data.blurb || "")} <span class="muted">Updated ${esc(data.updated)}.</span></p></section>
       <div class="cv-actions">
         <a class="btn" href="${esc(data.pdf)}" target="_blank" rel="noopener">Open PDF</a>
         <a class="btn ghost" href="${esc(data.pdf)}" download>Download</a>
-        <a class="btn ghost" href="mailto:${esc(S.email)}">Contact me</a>
+        ${(data.documents || []).map((d) => `<a class="btn ghost" href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.label)} (PDF)</a>`).join("")}
+        <a class="btn ghost" href="#" data-contact>Contact me</a>
       </div>
-      <ul class="highlights card">${data.highlights.map((h) => `<li>${rich(h)}</li>`).join("")}</ul>
+      <section class="cv-summary${degrees.length ? "" : " single"}">
+        <div class="card cv-box">
+          <h2 class="box-title">${esc(data.highlightsTitle || "Highlights")}</h2>
+          <ul class="highlights">${data.highlights.map((h) => `<li>${rich(h)}</li>`).join("")}</ul>
+        </div>
+        ${degrees.length ? `
+        <div class="card cv-box degrees">
+          <h2 class="box-title">${esc(data.qualificationsTitle || "Degrees")}</h2>
+          <ul class="degree-list">${degrees.map(([d, where]) => `<li><strong>${esc(d)}</strong><span>${esc(where)}</span></li>`).join("")}</ul>
+        </div>` : ""}
+      </section>
       <section class="cv-pages">
         ${(data.previews || []).map((src, i) => `<a class="cv-page card" href="${esc(data.pdf)}" target="_blank" rel="noopener">
             <img src="${esc(src)}" alt="${label} – page ${i + 1}" loading="lazy"><span>Page ${i + 1}</span></a>`).join("")}
