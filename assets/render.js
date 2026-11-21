@@ -95,7 +95,7 @@
       ["industry-cv.html", "Industry CV", "R&D, process and application engineering roles"],
       ["publications.html", "Publications", `${S.publications.filter((p) => !NON_ARTICLES.includes(p.status)).length} articles, patent and thesis – with graphical abstracts`],
       ["conferences.html", "Conferences", `${S.conferences.length} talks and posters – with videos`],
-      ["projects.html", "Maker projects", `116 Thingiverse designs, Instructables tutorials and customizable models`],
+      ["projects.html", "Maker projects", `117 Thingiverse designs, Instructables tutorials and customizable models`],
     ];
     const layout = new URLSearchParams(location.search).get("layout") || S.homeLayout || "classic";
     const avatar = S.photo ? `<img class="avatar" src="${esc(S.photo)}" alt="${esc(S.name)}">` : "";
@@ -169,9 +169,12 @@
           <ul class="degree-list">${degrees.map(([d, where]) => `<li><strong>${esc(d)}</strong><span>${esc(where)}</span></li>`).join("")}</ul>
         </div>` : ""}
       </section>
-      <section class="cv-pages">
+      <section class="cv-preview">
+        <p class="cv-preview-title">CV preview – click a page to open the PDF</p>
+        <div class="cv-pages">
         ${(data.previews || []).map((src, i) => `<a class="cv-page card" href="${esc(data.pdf)}" target="_blank" rel="noopener">
             <img src="${esc(src)}" alt="${label} – page ${i + 1}" loading="lazy"><span>Page ${i + 1}</span></a>`).join("")}
+        </div>
       </section>`;
   }
 
@@ -247,18 +250,21 @@
     if (S.projects.some((p) => p.oshwa)) categories.push(OSHWA);
     main.innerHTML = `
       <section class="page-head"><p class="kicker">Open hardware</p><h1>Maker projects</h1>
-        <p>Open-source hardware, tools and everyday designs – 116 designs on
+        <p>Open-source hardware, tools and everyday designs – 117 designs on
           <a href="${esc(S.thingiverseProfile)}" target="_blank" rel="noopener">Thingiverse</a> (100,000+ downloads),
+          also on <a href="${esc(S.makerworldProfile)}" target="_blank" rel="noopener">MakerWorld</a> and
+          <a href="${esc(S.printablesProfile)}" target="_blank" rel="noopener">Printables</a>
+          (&#9829; = likes on the three platforms),
           step-by-step tutorials on <a href="${esc(S.instructablesProfile)}" target="_blank" rel="noopener">Instructables</a>
           and demonstrations on <a href="${esc(S.youtubeChannel)}" target="_blank" rel="noopener">YouTube</a>.</p>
       </section>
-      <div class="projects-head"><p class="kicker">Featured</p><h2>All projects</h2>${filterBar(categories, "category")}</div>
+      <div class="projects-head"><h2>Selected projects</h2>${filterBar(categories, "category")}</div>
       <section class="grid">
         ${S.projects.map((p) => `
           <article class="project card" data-category="${esc(slug(p.category))}${p.oshwa ? " " + slug(OSHWA) : ""}">
             <a class="project-image" href="${esc(p.links[0].url)}" target="_blank" rel="noopener">${img(p.image, p.title)}</a>
             <div class="project-body">
-              <div class="meta"><span class="badge">${esc(p.category)}</span>${p.oshwa ? `<a class="badge cert" href="https://certification.oshwa.org/${esc(p.oshwa.toLowerCase())}.html" target="_blank" rel="noopener" title="OSHWA certificate">OSHWA ${esc(p.oshwa)}</a>` : ""}${p.likes ? `<span class="stat likes" title="Thingiverse likes">&#9829; ${esc(p.likes)}</span>` : ""}</div>
+              <div class="meta"><span class="badge">${esc(p.category)}</span>${p.oshwa ? `<a class="badge cert" href="https://certification.oshwa.org/${esc(p.oshwa.toLowerCase())}.html" target="_blank" rel="noopener" title="OSHWA certificate">OSHWA ${esc(p.oshwa)}</a>` : ""}${p.likes ? `<span class="stat likes" title="${esc(p.likesDetail || "Likes")}">&#9829; ${esc(p.likes)}</span>` : ""}</div>
               <h2>${esc(p.title)}</h2>
               <p>${rich(p.description)}</p>
               <div class="links">${p.links.map((l, i) => linkBtn(l, i === 0 ? "btn small" : "btn ghost small")).join("")}</div>
@@ -275,7 +281,7 @@
             <a class="mini card" href="${esc(d.url)}" target="_blank" rel="noopener" data-title="${esc(d.title.toLowerCase())}">
               ${d.image ? img(d.image, d.title) : `<span class="mini-placeholder">${esc(d.title)}</span>`}
               <span class="mini-title">${esc(d.title)}</span>
-              <span class="mini-meta">${d.likes ? `<span class="likes" title="Thingiverse likes">&#9829; ${esc(d.likes)}</span>` : ""}${d.video ? ` <span class="mini-video" data-video="${esc(d.video)}">&#9654; video</span>` : ""}</span>
+              <span class="mini-meta">${d.likes ? `<span class="likes" title="${esc(d.likesDetail || "Likes")}">&#9829; ${esc(d.likes)}</span>` : ""}${d.video ? ` <span class="mini-video" data-video="${esc(d.video)}">&#9654; video</span>` : ""}</span>
             </a>`).join("")}
         </div>
         <p class="center"><a class="btn ghost" href="${esc(S.thingiverseProfile)}" target="_blank" rel="noopener">Open my Thingiverse profile</a></p>

@@ -371,3 +371,28 @@ details summary { cursor: pointer; color: var(--accent); font-size: .9rem; font-
   .hero-id h1 { grid-column: 2; grid-row: 1; font-size: 1.9rem; }
   .hero-id .eyebrow { grid-column: 1 / -1; grid-row: 2; }
 }
+
+/* ---------- CV pages v2: summary boxes fill their area, centred titles, distinct from the CV sheets ---------- */
+.cv-summary { align-items: stretch; }
+.cv-box { display: flex; flex-direction: column; background: var(--tint, #eef3f6); box-shadow: none;
+  border: 1px solid #d6e0e8; border-top: 4px solid var(--accent); border-radius: 10px; padding: 1.3rem 1.6rem; }
+.cv-box.degrees { border-top-color: var(--accent-2); }
+.box-title { text-align: center; font-size: .9rem; margin-bottom: .9rem; }
+.cv-box .highlights { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly;
+  font-size: 1.08rem; line-height: 1.6; padding-left: 1.3rem; }
+.cv-box .highlights li { margin: .35rem 0; }
+.degree-list { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; }
+.degree-list li { text-align: center; }
+.cv-preview { background: #dfe5eb; border-radius: 12px; padding: 1.2rem 1.4rem 1.6rem; margin-top: 1.4rem; }
+.cv-preview-title { text-align: center; font-size: .8rem; text-transform: uppercase; letter-spacing: .14em;
+  color: var(--muted); font-weight: 700; margin: 0 0 1rem; }
+.cv-preview .cv-pages { margin: 0; }
+.cv-preview .cv-page { border-radius: 2px; border: none; background: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,.08), 0 12px 28px -10px rgba(11,42,74,.35); }
+.cv-preview .cv-page span { background: transparent; }
+@media (max-width: 860px) {
+  .cv-box .highlights { font-size: 1rem; }
+  .cv-preview { padding: 1rem .8rem 1.2rem; }
+}
+.cv-summary .cv-box.card { border-top: 4px solid var(--accent); }
+.cv-summary .cv-box.card.degrees { border-top-color: var(--accent-2); }
