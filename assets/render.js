@@ -3,63 +3,106 @@
   const page = document.body.dataset.page;
   const main = document.getElementById("content");
 
+  // Theme: from content.js, or temporarily from the page address (?theme=blueprint)
+  const themeParam = new URLSearchParams(location.search).get("theme");
+  document.documentElement.dataset.theme = themeParam || S.theme || "petrol";
+  if (themeParam) {
+    document.querySelectorAll(".nav a, .brand").forEach((a) => { a.href += "?theme=" + themeParam; });
+  }
+
   // esc() for plain text; rich() for fields that may contain simple HTML written in content.js
   const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const rich = (s) => String(s ?? "");
+  const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-");
   const external = (url) => /^https?:/.test(url) ? ' target="_blank" rel="noopener"' : "";
-  const linkBtn = (l, cls = "btn secondary") => l.url ? `<a class="${cls}" href="${esc(l.url)}"${external(l.url)}>${esc(l.label)}</a>` : "";
-  const img = (src, alt, cls = "") => src
-    ? `<img class="${cls}" src="${esc(src)}" alt="${esc(alt)}" loading="lazy">`
+  const isVideo = (url) => /youtube\.com|youtu\.be/.test(url);
+  const linkBtn = (l, cls = "btn ghost") => l.url
+    ? `<a class="${cls}${isVideo(l.url) ? " video" : ""}" href="${esc(l.url)}"${external(l.url)}>${isVideo(l.url) ? "&#9654; " : ""}${esc(l.label)}</a>`
     : "";
+  const img = (src, alt) => src ? `<img src="${esc(src)}" alt="${esc(alt)}" loading="lazy">` : "";
 
-  document.getElementById("brand-name").textContent = S.name;
+  document.getElementById("brand-name").innerHTML = `${esc(S.name)}<span>${esc(S.postnominal || "")}</span>`;
   document.querySelectorAll(`[data-nav="${page}"]`).forEach((a) => a.classList.add("active"));
-  document.title = `${document.title} | ${S.name}`;
+  document.title = page === "home" ? document.title : `${document.title} | ${S.name}`;
 
   const contactLinks = [
-    S.email && `<a href="mailto:${esc(S.email)}">Email</a>`,
+    `<a href="mailto:${esc(S.email)}">Email</a>`,
     ...S.links.filter((l) => l.url).map((l) => `<a href="${esc(l.url)}"${external(l.url)}>${esc(l.label)}</a>`),
-  ].filter(Boolean).join(" · ");
+  ].join("");
   document.getElementById("footer").innerHTML =
-    `<p>${contactLinks}</p><p class="muted">${esc(S.email)} · © ${new Date().getFullYear()} ${esc(S.name)}</p>`;
+    `<div class="footer-links">${contactLinks}</div><p class="muted">${esc(S.email)} · © ${new Date().getFullYear()} ${esc(S.name)}</p>`;
+
+  // Filter buttons: one generic implementation for every page
+  function filterBar(values, attr) {
+    return `<div class="filters" data-filter-attr="${attr}">
+      <button class="chip active" data-value="all">All</button>
+      ${values.map((v) => `<button class="chip" data-value="${esc(slug(v))}">${esc(v)}</button>`).join("")}
+    </div>`;
+  }
+  function activateFilters() {
+    main.querySelectorAll(".filters").forEach((bar) => {
+      const attr = bar.dataset.filterAttr;
+      bar.addEventListener("click", (event) => {
+        const chip = event.target.closest(".chip");
+        if (!chip) return;
+        bar.querySelectorAll(".chip").forEach((c) => c.classList.toggle("active", c === chip));
+        const value = chip.dataset.value;
+        main.querySelectorAll(`[data-${attr}]`).forEach((el) => {
+          el.classList.toggle("is-hidden", value !== "all" && el.dataset[attr] !== value);
+        });
+      });
+    });
+  }
 
   function home() {
     const tiles = [
       ["research-cv.html", "Research CV", "Research fellow, postdoc and academic positions"],
       ["industry-cv.html", "Industry CV", "R&D, process and application engineering roles"],
-      ["publications.html", "Publications", `${S.publications.length} articles & patent, with graphical abstracts`],
-      ["projects.html", "Maker projects", `${S.projects.length} open-source designs and tutorials`],
+      ["publications.html", "Publications", `${S.publications.length} articles, patent and thesis – with graphical abstracts`],
+      ["conferences.html", "Conferences", `${S.conferences.length} talks and posters – with videos`],
+      ["projects.html", "Maker projects", `116 Thingiverse designs, Instructables tutorials and customizable models`],
     ];
     main.innerHTML = `
       <section class="hero">
-        ${S.photo ? `<img class="avatar" src="${esc(S.photo)}" alt="${esc(S.name)}">` : ""}
-        <h1>${esc(S.name)}<span class="post">${esc(S.postnominal || "")}</span></h1>
-        <p class="tagline">${esc(S.tagline)}</p>
-        <p class="intro">${rich(S.intro)}</p>
-        <p class="work-right">${esc(S.workRight || "")}</p>
-        <p class="contact">${contactLinks}</p>
+        <div class="hero-text">
+          ${S.photo ? `<img class="avatar" src="${esc(S.photo)}" alt="${esc(S.name)}">` : ""}
+          <p class="eyebrow">${esc(S.tagline)}</p>
+          <h1>${esc(S.name)}<span class="post">${esc(S.postnominal || "")}</span></h1>
+          <p class="intro">${rich(S.intro)}</p>
+          <p class="work-right">${esc(S.workRight || "")}</p>
+          <div class="hero-actions">
+            <a class="btn" href="mailto:${esc(S.email)}">Contact me</a>
+            <a class="btn ghost light" href="research-cv.html">Research CV</a>
+            <a class="btn ghost light" href="industry-cv.html">Industry CV</a>
+          </div>
+        </div>
+        <div class="qr-card">
+          <img src="images/qr-home.svg" alt="QR code to this website">
+          <p><b>Scan to open on your phone</b><br><span>${esc((S.siteUrl || "").replace(/^https?:\/\//, ""))}</span></p>
+        </div>
       </section>
       <section class="numbers">
         ${(S.keyNumbers || []).map(([n, t]) => `<div><strong>${esc(n)}</strong><span>${esc(t)}</span></div>`).join("")}
       </section>
       <section class="tiles">
-        ${tiles.map(([href, t, d]) => `<a class="tile" href="${href}"><h2>${t}</h2><p>${esc(d)}</p></a>`).join("")}
+        ${tiles.map(([href, t, d]) => `<a class="tile" href="${href}"><h2>${t}</h2><p>${esc(d)}</p><span class="arrow">&rarr;</span></a>`).join("")}
       </section>`;
   }
 
   function cv(data, label) {
     main.innerHTML = `
-      <section class="page-head"><h1>${label}</h1>
+      <section class="page-head"><p class="kicker">Curriculum vitae</p><h1>${label}</h1>
         <p>${esc(data.blurb || "")} <span class="muted">Updated ${esc(data.updated)}.</span></p></section>
       <div class="cv-actions">
         <a class="btn" href="${esc(data.pdf)}" target="_blank" rel="noopener">Open PDF</a>
-        <a class="btn secondary" href="${esc(data.pdf)}" download>Download</a>
-        <a class="btn secondary" href="mailto:${esc(S.email)}">Contact me</a>
+        <a class="btn ghost" href="${esc(data.pdf)}" download>Download</a>
+        <a class="btn ghost" href="mailto:${esc(S.email)}">Contact me</a>
       </div>
-      <ul class="highlights">${data.highlights.map((h) => `<li>${rich(h)}</li>`).join("")}</ul>
-      <object class="pdf-view" data="${esc(data.pdf)}" type="application/pdf">
-        <p class="muted">The PDF preview is not available on this device – use "Open PDF" above.</p>
-      </object>`;
+      <ul class="highlights card">${data.highlights.map((h) => `<li>${rich(h)}</li>`).join("")}</ul>
+      <section class="cv-pages">
+        ${(data.previews || []).map((src, i) => `<a class="cv-page card" href="${esc(data.pdf)}" target="_blank" rel="noopener">
+            <img src="${esc(src)}" alt="${label} – page ${i + 1}" loading="lazy"><span>Page ${i + 1}</span></a>`).join("")}
+      </section>`;
   }
 
   function boldAuthor(authors) {
@@ -70,73 +113,108 @@
   function publications() {
     const statuses = [...new Set(S.publications.map((p) => p.status))];
     main.innerHTML = `
-      <section class="page-head"><h1>Publications</h1>
-        <p class="muted">* corresponding / first author. Links open the published version; unpublished work lists its available resources.</p>
-        <div class="filters">
-          <button class="chip active" data-filter="all">All</button>
-          ${statuses.map((s) => `<button class="chip" data-filter="${esc(s)}">${esc(s)}</button>`).join("")}
-        </div>
+      <section class="page-head"><p class="kicker">Research</p><h1>Publications</h1>
+        <p class="muted">* first / corresponding author. Published work links to the journal; unpublished work lists its available resources.</p>
+        ${filterBar(statuses, "status")}
       </section>
       <section class="pub-list">
         ${S.publications.map((p) => `
-          <article class="pub card ${p.abstractImage ? "" : "no-image"}" data-status="${esc(p.status)}">
+          <article class="pub card" data-status="${esc(slug(p.status))}">
             ${p.abstractImage ? `<a class="pub-image" href="${esc(p.abstractImage)}" target="_blank">${img(p.abstractImage, "Graphical abstract")}</a>` : ""}
             <div class="pub-body">
-              <span class="badge status-${esc(p.status).replace(/\s+/g, "-")}">${esc(p.status)}</span>
-              <span class="year">${esc(p.year)}</span>
+              <div class="meta"><span class="badge status-${esc(slug(p.status))}">${esc(p.status)}</span><span class="year">${esc(p.year)}</span></div>
               <h2>${rich(p.title)}</h2>
-              <p class="muted">${boldAuthor(p.authors)} — <em>${esc(p.venue)}</em></p>
+              <p class="authors">${boldAuthor(p.authors)} — <em>${esc(p.venue)}</em></p>
               <p>${rich(p.summary)}</p>
               <details><summary>Reference</summary><p class="ref">${esc(p.reference)}</p>
                 <button class="copy" data-ref="${esc(p.reference)}">Copy reference</button></details>
               <div class="links">
-                ${p.link ? linkBtn({ label: p.status === "patent" ? "View patent" : "Read the article", url: p.link }, "btn") : ""}
+                ${p.link ? linkBtn({ label: { patent: "View patent", thesis: "Read the thesis" }[p.status] || "Read the article", url: p.link }, "btn") : ""}
                 ${(p.resources || []).map((r) => linkBtn(r)).join("")}
               </div>
             </div>
           </article>`).join("")}
       </section>`;
-    setupFilter("pub", "status");
+    activateFilters();
     main.querySelectorAll(".copy").forEach((b) => b.addEventListener("click", () => {
       navigator.clipboard?.writeText(b.dataset.ref);
       b.textContent = "Copied!";
     }));
   }
 
+  function conferences() {
+    const formats = [...new Set(S.conferences.map((c) => c.format))];
+    main.innerHTML = `
+      <section class="page-head"><p class="kicker">Research</p><h1>Conferences &amp; talks</h1>
+        <p>Recorded talks are on my <a href="${esc(S.youtubeChannel)}" target="_blank" rel="noopener">YouTube channel</a>.</p>
+        ${filterBar(formats, "format")}
+      </section>
+      <section class="timeline">
+        ${S.conferences.map((c) => `
+          <article class="talk card" data-format="${esc(slug(c.format))}">
+            <div class="talk-year">${esc(c.year)}</div>
+            <div class="talk-body">
+              <span class="badge format-${esc(slug(c.format))}">${esc(c.format)}</span>
+              <h2>${rich(c.title)}</h2>
+              <p class="authors"><em>${esc(c.event)}</em>${c.place ? " · " + esc(c.place) : ""}</p>
+              <div class="links">
+                ${c.video ? linkBtn({ label: "Watch the talk", url: "https://www.youtube.com/watch?v=" + c.video }, "btn") : ""}
+                ${(c.links || []).map((l) => linkBtn(l)).join("")}
+              </div>
+            </div>
+            ${c.video ? `<a class="talk-thumb" href="https://www.youtube.com/watch?v=${esc(c.video)}" target="_blank" rel="noopener">
+                <img src="https://i.ytimg.com/vi/${esc(c.video)}/hqdefault.jpg" alt="Video of the talk" loading="lazy"><span class="play">&#9654;</span></a>` : ""}
+          </article>`).join("")}
+      </section>`;
+    activateFilters();
+  }
+
   function projects() {
     const categories = [...new Set(S.projects.map((p) => p.category))];
     main.innerHTML = `
-      <section class="page-head"><h1>Maker projects</h1>
-        <p>Open-source hardware and everyday designs – 100+ designs with more than 100,000 downloads.
-          Full collections on
-          <a href="${esc(S.thingiverseProfile)}" target="_blank" rel="noopener">Thingiverse</a> and
-          <a href="${esc(S.instructablesProfile)}" target="_blank" rel="noopener">Instructables</a>.</p>
-        <div class="filters">
-          <button class="chip active" data-filter="all">All</button>
-          ${categories.map((c) => `<button class="chip" data-filter="${esc(c)}">${esc(c)}</button>`).join("")}
-        </div>
+      <section class="page-head"><p class="kicker">Open hardware</p><h1>Maker projects</h1>
+        <p>Open-source hardware, tools and everyday designs – 116 designs on
+          <a href="${esc(S.thingiverseProfile)}" target="_blank" rel="noopener">Thingiverse</a> (100,000+ downloads),
+          step-by-step tutorials on <a href="${esc(S.instructablesProfile)}" target="_blank" rel="noopener">Instructables</a>
+          and demonstrations on <a href="${esc(S.youtubeChannel)}" target="_blank" rel="noopener">YouTube</a>.</p>
+        ${filterBar(categories, "category")}
       </section>
       <section class="grid">
         ${S.projects.map((p) => `
-          <article class="project card" data-category="${esc(p.category)}">
-            <a href="${esc(p.links[0].url)}" target="_blank" rel="noopener">${img(p.image, p.title)}</a>
+          <article class="project card" data-category="${esc(slug(p.category))}">
+            <a class="project-image" href="${esc(p.links[0].url)}" target="_blank" rel="noopener">${img(p.image, p.title)}</a>
             <div class="project-body">
-              <span class="badge">${esc(p.category)}</span>
+              <div class="meta"><span class="badge">${esc(p.category)}</span>${p.collects ? `<span class="stat" title="Thingiverse collections">&#9733; ${esc(p.collects)}</span>` : ""}</div>
               <h2>${esc(p.title)}</h2>
               <p>${rich(p.description)}</p>
-              <div class="links">${p.links.map((l, i) => linkBtn(l, i === 0 ? "btn small" : "btn secondary small")).join("")}</div>
+              <div class="links">${p.links.map((l, i) => linkBtn(l, i === 0 ? "btn small" : "btn ghost small")).join("")}</div>
             </div>
           </article>`).join("")}
+      </section>
+      <section class="more">
+        <div class="more-head">
+          <div><p class="kicker">Thingiverse</p><h2>All other designs <span class="count">${S.moreDesigns.length}</span></h2></div>
+          <input class="search" type="search" placeholder="Search designs…" aria-label="Search designs">
+        </div>
+        <div class="mini-grid">
+          ${S.moreDesigns.map((d) => `
+            <a class="mini card" href="${esc(d.url)}" target="_blank" rel="noopener" data-title="${esc(d.title.toLowerCase())}">
+              ${d.image ? img(d.image, d.title) : `<span class="mini-placeholder">${esc(d.title)}</span>`}
+              <span class="mini-title">${esc(d.title)}</span>
+              <span class="mini-meta">${d.collects ? `&#9733; ${esc(d.collects)}` : ""}${d.video ? ` <span class="mini-video" data-video="${esc(d.video)}">&#9654; video</span>` : ""}</span>
+            </a>`).join("")}
+        </div>
+        <p class="center"><a class="btn ghost" href="${esc(S.thingiverseProfile)}" target="_blank" rel="noopener">Open my Thingiverse profile</a></p>
       </section>`;
-    setupFilter("project", "category");
-  }
-
-  function setupFilter(itemClass, attr) {
-    main.querySelectorAll(".chip").forEach((chip) => chip.addEventListener("click", () => {
-      main.querySelectorAll(".chip").forEach((c) => c.classList.remove("active"));
-      chip.classList.add("active");
-      const f = chip.dataset.filter;
-      main.querySelectorAll("." + itemClass).forEach((el) => { el.hidden = f !== "all" && el.dataset[attr] !== f; });
+    activateFilters();
+    const search = main.querySelector(".search");
+    search.addEventListener("input", () => {
+      const q = search.value.trim().toLowerCase();
+      main.querySelectorAll(".mini").forEach((m) => m.classList.toggle("is-hidden", q && !m.dataset.title.includes(q)));
+    });
+    main.querySelectorAll(".mini-video").forEach((v) => v.addEventListener("click", (e) => {
+      e.preventDefault();
+      window.open(v.dataset.video, "_blank", "noopener");
     }));
   }
 
@@ -145,6 +223,7 @@
     "research-cv": () => cv(S.researchCV, "Research CV"),
     "industry-cv": () => cv(S.industryCV, "Industry CV"),
     publications,
+    conferences,
     projects,
   })[page]();
 })();
