@@ -1,5 +1,6 @@
 (function () {
   const S = SITE;
+  const NON_ARTICLES = ["patent", "thesis"];   // hidden under the "Articles" filter
   const page = document.body.dataset.page;
   const main = document.getElementById("content");
 
@@ -33,9 +34,9 @@
     `<div class="footer-links">${contactLinks}</div><p class="muted">${esc(S.email)} · © ${new Date().getFullYear()} ${esc(S.name)}</p>`;
 
   // Filter buttons: one generic implementation for every page
-  function filterBar(values, attr) {
-    return `<div class="filters" data-filter-attr="${attr}">
-      <button class="chip active" data-value="all">All</button>
+  function filterBar(values, attr, allLabel = "All", allExcludes = []) {
+    return `<div class="filters" data-filter-attr="${attr}" data-all-excludes="${allExcludes.map(slug).join(",")}">
+      <button class="chip active" data-value="all">${esc(allLabel)}</button>
       ${values.map((v) => `<button class="chip" data-value="${esc(slug(v))}">${esc(v)}</button>`).join("")}
     </div>`;
   }
@@ -47,10 +48,13 @@
         if (!chip) return;
         bar.querySelectorAll(".chip").forEach((c) => c.classList.toggle("active", c === chip));
         const value = chip.dataset.value;
+        const excluded = (bar.dataset.allExcludes || "").split(",").filter(Boolean);
         main.querySelectorAll(`[data-${attr}]`).forEach((el) => {
-          el.classList.toggle("is-hidden", value !== "all" && el.dataset[attr] !== value);
+          const values = (el.dataset[attr] || "").split(" ");
+          el.classList.toggle("is-hidden", value === "all" ? values.some((v) => excluded.includes(v)) : !values.includes(value));
         });
       });
+      bar.querySelector('.chip[data-value="all"]').click();
       const wanted = decodeURIComponent(location.hash.slice(1));
       const chip = wanted && bar.querySelector(`.chip[data-value="${wanted}"]`);
       if (chip) chip.click();
@@ -69,7 +73,7 @@
     const tiles = [
       ["research-cv.html", "Research CV", "Research fellow, postdoc and academic positions"],
       ["industry-cv.html", "Industry CV", "R&D, process and application engineering roles"],
-      ["publications.html", "Publications", `${S.publications.length} articles, patent and thesis – with graphical abstracts`],
+      ["publications.html", "Publications", `${S.publications.filter((p) => !NON_ARTICLES.includes(p.status)).length} articles, patent and thesis – with graphical abstracts`],
       ["conferences.html", "Conferences", `${S.conferences.length} talks and posters – with videos`],
       ["projects.html", "Maker projects", `116 Thingiverse designs, Instructables tutorials and customizable models`],
     ];
@@ -128,7 +132,7 @@
     main.innerHTML = `
       <section class="page-head"><p class="kicker">Research</p><h1>Publications</h1>
         <p class="muted">* first / corresponding author. Published work links to the journal; unpublished work lists its available resources.</p>
-        ${filterBar(statuses, "status")}
+        ${filterBar(statuses.filter((s) => !NON_ARTICLES.includes(s)).concat(statuses.filter((s) => NON_ARTICLES.includes(s))), "status", "Articles", NON_ARTICLES)}
       </section>
       <section class="pub-list">
         ${S.publications.map((p) => `
@@ -139,6 +143,7 @@
               <h2>${rich(p.title)}</h2>
               <p class="authors">${boldAuthor(p.authors)} — <em>${esc(p.venue)}</em></p>
               <p>${rich(p.summary)}</p>
+              ${p.details ? `<p class="pub-details">${rich(p.details)}</p>` : ""}
               <details><summary>Reference</summary><p class="ref">${esc(p.reference)}</p>
                 <button class="copy" data-ref="${esc(p.reference)}">Copy reference</button></details>
               <div class="links">
@@ -185,6 +190,8 @@
 
   function projects() {
     const categories = [...new Set(S.projects.map((p) => p.category))];
+    const OSHWA = "OSHWA certified";
+    if (S.projects.some((p) => p.oshwa)) categories.push(OSHWA);
     main.innerHTML = `
       <section class="page-head"><p class="kicker">Open hardware</p><h1>Maker projects</h1>
         <p>Open-source hardware, tools and everyday designs – 116 designs on
@@ -192,33 +199,13 @@
           step-by-step tutorials on <a href="${esc(S.instructablesProfile)}" target="_blank" rel="noopener">Instructables</a>
           and demonstrations on <a href="${esc(S.youtubeChannel)}" target="_blank" rel="noopener">YouTube</a>.</p>
       </section>
-      ${(S.oshwaCertifications || []).length ? `
-      <section class="oshwa" id="oshwa">
-        <div class="more-head">
-          <div><p class="kicker">Open Source Hardware Association</p>
-            <h2>OSHWA-certified open hardware <span class="count">${S.oshwaCertifications.length}</span></h2></div>
-        </div>
-        <div class="grid">
-          ${S.oshwaCertifications.map((o) => `
-            <article class="project card">
-              <a class="project-image" href="${esc(o.certificate)}" target="_blank" rel="noopener">${img(o.image, o.title)}</a>
-              <div class="project-body">
-                <div class="meta"><span class="badge cert">OSHWA ${esc(o.uid)}</span></div>
-                <h2>${esc(o.title)}</h2>
-                <p>${rich(o.description)}</p>
-                <div class="links">${linkBtn({ label: "Certificate " + o.uid, url: o.certificate }, "btn small")}${(o.links || []).map((l) => linkBtn(l, "btn ghost small")).join("")}</div>
-              </div>
-            </article>`).join("")}
-        </div>
-      </section>
-` : ""}
       <div class="projects-head"><p class="kicker">Featured</p><h2>All projects</h2>${filterBar(categories, "category")}</div>
       <section class="grid">
         ${S.projects.map((p) => `
-          <article class="project card" data-category="${esc(slug(p.category))}">
+          <article class="project card" data-category="${esc(slug(p.category))}${p.oshwa ? " " + slug(OSHWA) : ""}">
             <a class="project-image" href="${esc(p.links[0].url)}" target="_blank" rel="noopener">${img(p.image, p.title)}</a>
             <div class="project-body">
-              <div class="meta"><span class="badge">${esc(p.category)}</span>${p.collects ? `<span class="stat" title="Thingiverse collections">&#9733; ${esc(p.collects)}</span>` : ""}</div>
+              <div class="meta"><span class="badge">${esc(p.category)}</span>${p.oshwa ? `<a class="badge cert" href="https://certification.oshwa.org/${esc(p.oshwa.toLowerCase())}.html" target="_blank" rel="noopener" title="OSHWA certificate">OSHWA ${esc(p.oshwa)}</a>` : ""}${p.likes ? `<span class="stat likes" title="Thingiverse likes">&#9829; ${esc(p.likes)}</span>` : ""}</div>
               <h2>${esc(p.title)}</h2>
               <p>${rich(p.description)}</p>
               <div class="links">${p.links.map((l, i) => linkBtn(l, i === 0 ? "btn small" : "btn ghost small")).join("")}</div>
@@ -235,7 +222,7 @@
             <a class="mini card" href="${esc(d.url)}" target="_blank" rel="noopener" data-title="${esc(d.title.toLowerCase())}">
               ${d.image ? img(d.image, d.title) : `<span class="mini-placeholder">${esc(d.title)}</span>`}
               <span class="mini-title">${esc(d.title)}</span>
-              <span class="mini-meta">${d.collects ? `&#9733; ${esc(d.collects)}` : ""}${d.video ? ` <span class="mini-video" data-video="${esc(d.video)}">&#9654; video</span>` : ""}</span>
+              <span class="mini-meta">${d.likes ? `<span class="likes" title="Thingiverse likes">&#9829; ${esc(d.likes)}</span>` : ""}${d.video ? ` <span class="mini-video" data-video="${esc(d.video)}">&#9654; video</span>` : ""}</span>
             </a>`).join("")}
         </div>
         <p class="center"><a class="btn ghost" href="${esc(S.thingiverseProfile)}" target="_blank" rel="noopener">Open my Thingiverse profile</a></p>
